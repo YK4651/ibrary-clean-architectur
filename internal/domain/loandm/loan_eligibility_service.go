@@ -39,7 +39,7 @@ func (s *LoanEligibilityService) IneligibilityReason(u *userdm.User, currentLoan
 		return &reason
 	}
 
-	if u.HasOverdueBooks() {
+	if u.OverdueFees() > 0 {
 		reason := "延滞中の本があるため貸出できません"
 		return &reason
 	}

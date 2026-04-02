@@ -1,21 +1,45 @@
 package userdm
 
-import "github.com/YK4651/ibrary-clean-architectur/internal/domain/shared"
+import (
+	"errors"
+	"fmt"
+	"math/rand"
+	"regexp"
+	"strconv"
+	"time"
+)
 
-// UserID はユーザーエンティティのID
-type UserID shared.ID
-
-// NewUserID は新しいUserIDを生成
-func NewUserID() UserID {
-	return UserID(shared.NewID())
+type UserID struct {
+	value string
 }
 
-// Value は文字列としての値を返す
-func (id UserID) Value() string {
-	return shared.ID(id).Value()
+// NewUserID は検証付きでUserIDを作成します（8桁）
+func NewUserID(value string) (*UserID, error) {
+	matched, err := regexp.MatchString(`^\d{8}$`, value)
+	if err != nil {
+		return nil, fmt.Errorf("failed to validate UserID format: %w", err)
+	}
+	if !matched {
+		return nil, errors.New("UserIDは正確に8桁である必要があります。入力値: " + value)
+	}
+	return &UserID{value: value}, nil
 }
 
-// Equals は値オブジェクトの等価性を比較
-func (id UserID) Equals(other UserID) bool {
-	return shared.ID(id).Equals(shared.ID(other))
+// GenerateUserID はランダムな8桁のUserIDを作成します
+func GenerateUserID() *UserID {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	randomId := r.Intn(90000000) + 10000000
+	return &UserID{value: strconv.Itoa(randomId)}
+}
+
+func (u *UserID) Value() string {
+	return u.value
+}
+
+func (u *UserID) Equals(other *UserID) bool {
+	return u.value == other.value
+}
+
+func (u *UserID) String() string {
+	return u.value
 }

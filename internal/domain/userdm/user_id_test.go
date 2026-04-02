@@ -1,47 +1,42 @@
-package userdm_test
+package userdm
 
 import (
 	"testing"
-
-	"github.com/YK4651/ibrary-clean-architectur/internal/domain/userdm"
 )
 
-func TestUserID_GeneratesValidID(t *testing.T) {
-	id := userdm.NewUserID()
+func TestUserID(t *testing.T) {
+	t.Run("Create", func(t *testing.T) {
+		// 有効な8桁ID
+		userID, err := NewUserID("12345678")
+		if err != nil {
+			t.Fatalf("有効なUserIDの作成に失敗しました: %v", err)
+		}
+		if userID.Value() != "12345678" {
+			t.Errorf("IDは '12345678' であるべきですが、'%s' でした", userID.Value())
+		}
+	})
 
-	if id.Value() == "" {
-		t.Error("Expected non-empty ID value")
-	}
+	t.Run("ValidateFormat", func(t *testing.T) {
+		// 無効: 8桁ではない
+		_, err := NewUserID("123")
+		if err == nil {
+			t.Error("8桁ではないUserIDに対してエラーが期待されました")
+		}
 
-	// ULID should be 26 characters
-	if len(id.Value()) != 26 {
-		t.Errorf("Expected ULID length 26, got: %d", len(id.Value()))
-	}
-}
+		// 無効: 文字が含まれている
+		_, err = NewUserID("1234abcd")
+		if err == nil {
+			t.Error("数字以外を含むUserIDに対してエラーが期待されました")
+		}
+	})
 
-func TestUserID_GeneratesUniqueIDs(t *testing.T) {
-	id1 := userdm.NewUserID()
-	id2 := userdm.NewUserID()
-
-	if id1.Equals(id2) {
-		t.Error("Expected different IDs to not be equal")
-	}
-}
-
-func TestUserID_Equality(t *testing.T) {
-	id1 := userdm.NewUserID()
-	id2 := id1 // Same reference
-
-	if !id1.Equals(id2) {
-		t.Error("Expected same ID to be equal to itself")
-	}
-}
-
-func TestUserID_ValueReturnsString(t *testing.T) {
-	id := userdm.NewUserID()
-	value := id.Value()
-
-	if value == "" {
-		t.Error("Value() should return non-empty string")
-	}
+	t.Run("Generate", func(t *testing.T) {
+		userID := GenerateUserID()
+		if userID == nil {
+			t.Fatal("GenerateUserIDがnilを返しました")
+		}
+		if len(userID.Value()) != 8 {
+			t.Errorf("生成されたUserIDは8桁であるべきですが、%d桁でした", len(userID.Value()))
+		}
+	})
 }
