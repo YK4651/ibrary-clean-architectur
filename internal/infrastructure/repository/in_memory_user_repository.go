@@ -16,7 +16,7 @@ func NewInMemoryUserRepository() userdm.UserRepository {
 }
 
 func (r *InMemoryUserRepository) Save(u *userdm.User) error {
-	r.users[u.ID().Value()] = u
+	r.users[u.Id().Value()] = u
 	return nil
 }
 

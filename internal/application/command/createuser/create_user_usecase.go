@@ -53,7 +53,7 @@ func (uc *CreateUserUseCase) Execute(input CreateUserInput) (*CreateUserOutput, 
 
 	// DTOを返す
 	return &CreateUserOutput{
-		ID:          u.ID().Value(),
+		ID:          u.Id().Value(),
 		Name:        u.Name(),
 		Email:       u.Email(),
 		Status:      string(u.Status()),

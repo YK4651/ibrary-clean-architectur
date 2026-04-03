@@ -7,7 +7,6 @@ import (
 )
 
 func TestCanCreateBook(t *testing.T) {
-	// Create Value Objects
 	bookID := bookdm.NewBookID()
 	isbn, err := bookdm.NewISBN("9780134494166")
 	if err != nil {
@@ -19,7 +18,6 @@ func TestCanCreateBook(t *testing.T) {
 		t.Fatalf("Failed to create book: %v", err)
 	}
 
-	// ID should be auto-generated ULID (26 characters)
 	if len(b.Id().Value()) != 26 {
 		t.Errorf("Expected ULID length 26, got %d", len(b.Id().Value()))
 	}
@@ -31,7 +29,7 @@ func TestCanCreateBook(t *testing.T) {
 	}
 }
 
-func TestIsAvailableWhenCopiesAvailable(t *testing.T) {
+func TestCanBorrowWhenCopiesAvailable(t *testing.T) {
 	bookID := bookdm.NewBookID()
 	isbn, err := bookdm.NewISBN("9780134494166")
 	if err != nil {
@@ -42,15 +40,13 @@ func TestIsAvailableWhenCopiesAvailable(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// アクティブ貸出0件なら在庫あり（totalCopies=2）
 	if !b.IsAvailable(0) {
 		t.Error("Expected book to be available when no active loans")
 	}
-	if !b.IsAvailable(1) {
-		t.Error("Expected book to be available when active loans < total copies")
-	}
 }
 
-func TestNotAvailableWhenAllCopiesLoaned(t *testing.T) {
+func TestIsAvailableWithActiveLoans(t *testing.T) {
 	bookID := bookdm.NewBookID()
 	isbn, err := bookdm.NewISBN("9780134494166")
 	if err != nil {
@@ -61,10 +57,29 @@ func TestNotAvailableWhenAllCopiesLoaned(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if b.IsAvailable(2) {
-		t.Error("Expected book to be unavailable when active loans == total copies")
+	// アクティブ貸出1件 → まだ借りられる
+	if !b.IsAvailable(1) {
+		t.Error("Expected available when 1 active loan and totalCopies=2")
 	}
-	if b.IsAvailable(3) {
-		t.Error("Expected book to be unavailable when active loans > total copies")
+	// アクティブ貸出2件以上 → 借りられない
+	if b.IsAvailable(2) {
+		t.Error("Expected not available when active loans >= totalCopies")
+	}
+}
+
+func TestIsAvailableWhenNoCopiesLeft(t *testing.T) {
+	bookID := bookdm.NewBookID()
+	isbn, err := bookdm.NewISBN("9780134494166")
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, err := bookdm.NewBook(bookID, "Clean Architecture", "Robert Martin", isbn, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// 1冊のみで1件貸出中 → 借りられない
+	if b.IsAvailable(1) {
+		t.Error("Expected not available when active loans >= totalCopies")
 	}
 }

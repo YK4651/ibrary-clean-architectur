@@ -19,7 +19,7 @@ func newMockUserRepository() *mockUserRepository {
 }
 
 func (m *mockUserRepository) Save(u *userdm.User) error {
-	m.users[u.ID().Value()] = u
+	m.users[u.Id().Value()] = u
 	return nil
 }
 
