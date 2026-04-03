@@ -12,6 +12,8 @@ const (
 	UserStatusSuspended UserStatus = "suspended"
 )
 
+const MaxLoans = 5
+
 type User struct {
 	id          *UserID
 	name        string
@@ -20,8 +22,6 @@ type User struct {
 	overdueFees float64
 	createdAt   time.Time
 }
-
-const MaxLoans = 5
 
 // NewUser は新しいアクティブなユーザーを作成します
 func NewUser(name, email string) *User {
@@ -46,7 +46,10 @@ func ReconstructUser(
 	return &User{id, name, email, status, overdueFees, createdAt}
 }
 
-// 提供された貸出数に基づいて貸出可能性を検証
+// Userエンティティはルールに焦点を当て、状態は持たない
+// 貸出数はLoanテーブルから導出
+
+// CanBorrow - 提供された貸出数に基づいて貸出可能性を検証
 // 貸出数はユースケースによって提供される（Loanテーブルから導出）
 func (u *User) CanBorrow(currentLoanCount uint32) bool {
 	if u.status == UserStatusSuspended {
@@ -61,9 +64,11 @@ func (u *User) CanBorrow(currentLoanCount uint32) bool {
 	return true
 }
 
+// 状態の変更はLoanテーブルで追跡される（BorrowBook/ReturnBookメソッドは不要）
+
 func (u *User) AddOverdueFee(amount float64) (*User, error) {
 	if amount <= 0 {
-		return nil, errors.New("延滞料金は0より大きい必要があります")
+		return nil, errors.New("overdue fee must be greater than 0")
 	}
 	return &User{
 		id:          u.id,
@@ -75,13 +80,12 @@ func (u *User) AddOverdueFee(amount float64) (*User, error) {
 	}, nil
 }
 
-// 不変の状態変更: 延滞料金を支払う
 func (u *User) PayOverdueFee(amount float64) (*User, error) {
 	if amount < 0 {
-		return nil, errors.New("支払い金額は負の値にできません")
+		return nil, errors.New("payment amount cannot be negative")
 	}
 	if amount > u.overdueFees {
-		return nil, errors.New("支払い金額が現在の延滞料金を超えています")
+		return nil, errors.New("payment exceeds current overdue fees")
 	}
 	return &User{
 		id:          u.id,
@@ -104,7 +108,6 @@ func (u *User) Suspend() *User {
 	}
 }
 
-// 不変の状態変更: アカウントを有効化
 func (u *User) Activate() *User {
 	return &User{
 		id:          u.id,
@@ -117,7 +120,7 @@ func (u *User) Activate() *User {
 }
 
 // ゲッター
-func (u *User) ID() *UserID          { return u.id }
+func (u *User) Id() *UserID          { return u.id }
 func (u *User) Name() string         { return u.name }
 func (u *User) Email() string        { return u.email }
 func (u *User) Status() UserStatus   { return u.status }

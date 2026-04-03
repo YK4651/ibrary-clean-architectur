@@ -2,7 +2,6 @@ package bookdm
 
 import "errors"
 
-// Bookエンティティ - 図書館の本を表す
 type Book struct {
 	id          BookID
 	title       string
@@ -13,6 +12,7 @@ type Book struct {
 	// availableCopies = totalCopies - activeLoansForThisBook
 }
 
+// NewBook - 新しいBookを作成
 func NewBook(
 	id BookID,
 	title string,
@@ -20,7 +20,6 @@ func NewBook(
 	isbn *ISBN,
 	totalCopies uint32,
 ) (*Book, error) {
-	// コンストラクタでの検証（フェイルファスト）
 	if len(title) == 0 {
 		return nil, errors.New("book title cannot be empty")
 	}
@@ -40,38 +39,16 @@ func NewBook(
 	}, nil
 }
 
-// ゲッター（Goの慣習: "Get"プレフィックスなし）
-func (b *Book) Id() BookID {
-	return b.id
-}
+// Book エンティティはルールに焦点を当て、状態は持たない
+// 在庫数はLoanテーブルから導出
 
-func (b *Book) Title() string {
-	return b.title
-}
-
-func (b *Book) Author() string {
-	return b.author
-}
-
-func (b *Book) ISBN() *ISBN {
-	return b.isbn
-}
-
-func (b *Book) TotalCopies() uint32 {
-	return b.totalCopies
-}
-
-// ビジネスロジックメソッド
-// Book entity focuses on RULES, not STATE
-// Available copies are derived from the Loan table
-
-// IsAvailable validates if book has available copies based on provided active loan count
-// The count is provided by the use case (derived from Loan table)
+// IsAvailable - 提供されたアクティブ貸出数に基づいて在庫の有無を検証
+// 貸出数はユースケースによって提供される（Loanテーブルから導出）
 func (b *Book) IsAvailable(currentActiveLoans uint32) bool {
 	return currentActiveLoans < b.totalCopies
 }
 
-// State changes are tracked in Loan table (no BorrowCopy/ReturnCopy methods needed)
+// 状態の変更はLoanテーブルで追跡される（BorrowCopy/ReturnCopyメソッドは不要）
 
 // 状態変更メソッド
 func (b *Book) UpdateTitle(newTitle string) error {
@@ -89,3 +66,10 @@ func (b *Book) UpdateAuthor(newAuthor string) error {
 	b.author = newAuthor
 	return nil
 }
+
+// Getters
+func (b *Book) Id() BookID          { return b.id }
+func (b *Book) Title() string       { return b.title }
+func (b *Book) Author() string      { return b.author }
+func (b *Book) ISBN() *ISBN         { return b.isbn }
+func (b *Book) TotalCopies() uint32 { return b.totalCopies }
